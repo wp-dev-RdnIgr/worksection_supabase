@@ -123,7 +123,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "-- Отримуємо поточний batch offset\nSELECT COALESCE(\n  (SELECT value::int FROM ws_sync_state WHERE key = 'batch_offset'),\n  0\n) as batch_offset;",
+        "query": "-- Отримуємо поточний batch offset\nSELECT COALESCE(\n  (SELECT value::int FROM zstg_ws_sync_state WHERE key = 'batch_offset'),\n  0\n) as batch_offset;",
         "options": {}
       },
       "id": "6c471d43-5715-493d-87c8-ee5f9e168cd4",
@@ -235,7 +235,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO ws_sync_state (key, value, updated_at) \nVALUES ('batch_offset', $1, NOW())\nON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW();",
+        "query": "INSERT INTO zstg_ws_sync_state (key, value, updated_at) \nVALUES ('batch_offset', $1, NOW())\nON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW();",
         "options": {
           "queryReplacement": "={{ [$('Prepare Batch').first().json._nextOffset.toString()] }}"
         }
@@ -805,7 +805,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "-- 1. Отключаем проверку FK constraints (ВАЖНО!)\nSET session_replication_role = 'replica';\n\n-- 2. Очищаем таблицы (task_status_history НЕ трогаем!)\nTRUNCATE TABLE zstg_ws_time_logs CASCADE;\nTRUNCATE TABLE zstg_ws_tasks CASCADE;\nTRUNCATE TABLE zstg_ws_projects CASCADE;\nTRUNCATE TABLE zstg_ws_users CASCADE;\nTRUNCATE TABLE zstg_ws_departments CASCADE;\nTRUNCATE TABLE ws_sync_state CASCADE;\n\n-- 3. Включаем проверку FK constraints обратно (ВАЖНО!)\nSET session_replication_role = 'origin';\n\n-- 4. Скидаємо sequence для departments на 1\nALTER SEQUENCE zstg_ws_departments_id_seq RESTART WITH 1;\n\n-- 5. Ініціалізуємо sync_state\nINSERT INTO ws_sync_state (key, value, updated_at) \nVALUES ('batch_offset', '0', NOW())\nON CONFLICT (key) DO UPDATE SET value = '0', updated_at = NOW();",
+        "query": "-- 1. Отключаем проверку FK constraints (ВАЖНО!)\nSET session_replication_role = 'replica';\n\n-- 2. Очищаем таблицы (task_status_history НЕ трогаем!)\nTRUNCATE TABLE zstg_ws_time_logs CASCADE;\nTRUNCATE TABLE zstg_ws_tasks CASCADE;\nTRUNCATE TABLE zstg_ws_projects CASCADE;\nTRUNCATE TABLE zstg_ws_users CASCADE;\nTRUNCATE TABLE zstg_ws_departments CASCADE;\nTRUNCATE TABLE zstg_ws_sync_state CASCADE;\n\n-- 3. Включаем проверку FK constraints обратно (ВАЖНО!)\nSET session_replication_role = 'origin';\n\n-- 4. Скидаємо sequence для departments на 1\nALTER SEQUENCE zstg_ws_departments_id_seq RESTART WITH 1;\n\n-- 5. Ініціалізуємо sync_state\nINSERT INTO zstg_ws_sync_state (key, value, updated_at) \nVALUES ('batch_offset', '0', NOW())\nON CONFLICT (key) DO UPDATE SET value = '0', updated_at = NOW();",
         "options": {}
       },
       "id": "a613f3ce-2339-41d2-83fb-7b3c49885f94",
@@ -994,7 +994,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "-- Отримуємо поточний batch offset\nSELECT COALESCE(\n  (SELECT value::int FROM ws_sync_state WHERE key = 'batch_offset'),\n  0\n) as batch_offset;",
+        "query": "-- Отримуємо поточний batch offset\nSELECT COALESCE(\n  (SELECT value::int FROM zstg_ws_sync_state WHERE key = 'batch_offset'),\n  0\n) as batch_offset;",
         "options": {}
       },
       "id": "1de7e3f2-d48f-4008-8b44-f8b17a6c339f",
