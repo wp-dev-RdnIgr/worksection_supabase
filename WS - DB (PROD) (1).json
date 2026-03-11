@@ -1,5 +1,5 @@
 {
-  "name": "WS - DB (PROD)",
+  "name": "WS - DB (STG)",
   "nodes": [
     {
       "parameters": {
@@ -61,7 +61,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO ws_departments (name)\nVALUES ($1)\nON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name\nRETURNING *;",
+        "query": "INSERT INTO zstg_ws_departments (name)\nVALUES ($1)\nON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name\nRETURNING *;",
         "options": {
           "queryReplacement": "={{ $json.name }}"
         }
@@ -84,7 +84,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO ws_users (id, name, email, title, role, status, department_id)\nVALUES ($1, $2, $3, $4, $5, $6, $7)\nON CONFLICT (id) DO UPDATE SET\n  name = EXCLUDED.name,\n  email = EXCLUDED.email,\n  title = EXCLUDED.title,\n  role = EXCLUDED.role,\n  status = EXCLUDED.status,\n  department_id = EXCLUDED.department_id;",
+        "query": "INSERT INTO zstg_ws_users (id, name, email, title, role, status, department_id)\nVALUES ($1, $2, $3, $4, $5, $6, $7)\nON CONFLICT (id) DO UPDATE SET\n  name = EXCLUDED.name,\n  email = EXCLUDED.email,\n  title = EXCLUDED.title,\n  role = EXCLUDED.role,\n  status = EXCLUDED.status,\n  department_id = EXCLUDED.department_id;",
         "options": {
           "queryReplacement": "={{ [$json.id, $json.name, $json.email, $json.title || null, $json.role || null, $json.status || null, $json.department_id_fixed] }}"
         }
@@ -123,7 +123,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "-- Отримуємо поточний batch offset\nSELECT COALESCE(\n  (SELECT value::int FROM ws_sync_state WHERE key = 'batch_offset'),\n  0\n) as batch_offset;",
+        "query": "-- Отримуємо поточний batch offset\nSELECT COALESCE(\n  (SELECT value::int FROM zstg_ws_sync_state WHERE key = 'batch_offset'),\n  0\n) as batch_offset;",
         "options": {}
       },
       "id": "6c471d43-5715-493d-87c8-ee5f9e168cd4",
@@ -235,7 +235,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO ws_sync_state (key, value, updated_at) \nVALUES ('batch_offset', $1, NOW())\nON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW();",
+        "query": "INSERT INTO zstg_ws_sync_state (key, value, updated_at) \nVALUES ('batch_offset', $1, NOW())\nON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW();",
         "options": {
           "queryReplacement": "={{ [$('Prepare Batch').first().json._nextOffset.toString()] }}"
         }
@@ -369,7 +369,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO ws_projects (id, name, status, company, page, max_time, max_money, date_added, date_start, date_end, date_closed, user_from_id, user_to_id, users_raw, last_synced_at)\nVALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW())\nON CONFLICT (id) DO UPDATE SET\n  name = EXCLUDED.name,\n  status = EXCLUDED.status,\n  company = EXCLUDED.company,\n  page = EXCLUDED.page,\n  max_time = EXCLUDED.max_time,\n  max_money = EXCLUDED.max_money,\n  date_added = EXCLUDED.date_added,\n  date_start = EXCLUDED.date_start,\n  date_end = EXCLUDED.date_end,\n  date_closed = EXCLUDED.date_closed,\n  user_from_id = EXCLUDED.user_from_id,\n  user_to_id = EXCLUDED.user_to_id,\n  users_raw = EXCLUDED.users_raw,\n  last_synced_at = NOW();",
+        "query": "INSERT INTO zstg_ws_projects (id, name, status, company, page, max_time, max_money, date_added, date_start, date_end, date_closed, user_from_id, user_to_id, users_raw, last_synced_at)\nVALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW())\nON CONFLICT (id) DO UPDATE SET\n  name = EXCLUDED.name,\n  status = EXCLUDED.status,\n  company = EXCLUDED.company,\n  page = EXCLUDED.page,\n  max_time = EXCLUDED.max_time,\n  max_money = EXCLUDED.max_money,\n  date_added = EXCLUDED.date_added,\n  date_start = EXCLUDED.date_start,\n  date_end = EXCLUDED.date_end,\n  date_closed = EXCLUDED.date_closed,\n  user_from_id = EXCLUDED.user_from_id,\n  user_to_id = EXCLUDED.user_to_id,\n  users_raw = EXCLUDED.users_raw,\n  last_synced_at = NOW();",
         "options": {
           "queryReplacement": "={{ [$json.id, $json.name, $json.status, $json.company, $json.page, $json.max_time, $json.max_money, $json.date_added, $json.date_start, $json.date_end, $json.date_closed, $json.user_from_id, $json.user_to_id, $json.users_raw] }}"
         }
@@ -447,7 +447,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT id FROM ws_users;",
+        "query": "SELECT id FROM zstg_ws_users;",
         "options": {}
       },
       "id": "895e6df3-59ec-4ad3-96e4-b666bfcbea52",
@@ -605,7 +605,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO ws_tasks (id, project_id, parent_id, name, text, status, priority, page, date_added, date_start, date_end, date_closed, user_from_id, user_to_id, tags, last_synced_at)\nVALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW())\nON CONFLICT (id) DO UPDATE SET\n  project_id = EXCLUDED.project_id,\n  parent_id = EXCLUDED.parent_id,\n  name = EXCLUDED.name,\n  text = EXCLUDED.text,\n  status = EXCLUDED.status,\n  priority = EXCLUDED.priority,\n  page = EXCLUDED.page,\n  date_added = EXCLUDED.date_added,\n  date_start = EXCLUDED.date_start,\n  date_end = EXCLUDED.date_end,\n  date_closed = EXCLUDED.date_closed,\n  user_from_id = EXCLUDED.user_from_id,\n  user_to_id = EXCLUDED.user_to_id,\n  tags = EXCLUDED.tags,\n  last_synced_at = NOW();",
+        "query": "INSERT INTO zstg_ws_tasks (id, project_id, parent_id, name, text, status, priority, page, date_added, date_start, date_end, date_closed, user_from_id, user_to_id, tags, last_synced_at)\nVALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW())\nON CONFLICT (id) DO UPDATE SET\n  project_id = EXCLUDED.project_id,\n  parent_id = EXCLUDED.parent_id,\n  name = EXCLUDED.name,\n  text = EXCLUDED.text,\n  status = EXCLUDED.status,\n  priority = EXCLUDED.priority,\n  page = EXCLUDED.page,\n  date_added = EXCLUDED.date_added,\n  date_start = EXCLUDED.date_start,\n  date_end = EXCLUDED.date_end,\n  date_closed = EXCLUDED.date_closed,\n  user_from_id = EXCLUDED.user_from_id,\n  user_to_id = EXCLUDED.user_to_id,\n  tags = EXCLUDED.tags,\n  last_synced_at = NOW();",
         "options": {
           "queryReplacement": "={{ [$json.id, $json.project_id, $json.parent_id, $json.name, $json.text, $json.status, $json.priority, $json.page, $json.date_added, $json.date_start, $json.date_end, $json.date_closed, $json.user_from_id, $json.user_to_id, $json.tags ? JSON.stringify($json.tags) : null] }}"
         }
@@ -721,7 +721,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO ws_time_logs (id, task_id, user_id, time_str, hours, money, comment, date_log, last_synced_at)\nVALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())\nON CONFLICT (id) DO UPDATE SET\n  task_id = EXCLUDED.task_id,\n  user_id = EXCLUDED.user_id,\n  time_str = EXCLUDED.time_str,\n  hours = EXCLUDED.hours,\n  money = EXCLUDED.money,\n  comment = EXCLUDED.comment,\n  date_log = EXCLUDED.date_log,\n  last_synced_at = NOW();",
+        "query": "INSERT INTO zstg_ws_time_logs (id, task_id, user_id, time_str, hours, money, comment, date_log, last_synced_at)\nVALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())\nON CONFLICT (id) DO UPDATE SET\n  task_id = EXCLUDED.task_id,\n  user_id = EXCLUDED.user_id,\n  time_str = EXCLUDED.time_str,\n  hours = EXCLUDED.hours,\n  money = EXCLUDED.money,\n  comment = EXCLUDED.comment,\n  date_log = EXCLUDED.date_log,\n  last_synced_at = NOW();",
         "options": {
           "queryReplacement": "={{ [$json.id, $json.task_id, $json.user_id, $json.time_str, $json.hours, $json.money, $json.comment, $json.date_log] }}"
         }
@@ -805,7 +805,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "-- 1. Отключаем проверку FK constraints (ВАЖНО!)\nSET session_replication_role = 'replica';\n\n-- 2. Очищаем таблицы (task_status_history НЕ трогаем!)\nTRUNCATE TABLE ws_time_logs CASCADE;\nTRUNCATE TABLE ws_tasks CASCADE;\nTRUNCATE TABLE ws_projects CASCADE;\nTRUNCATE TABLE ws_users CASCADE;\nTRUNCATE TABLE ws_departments CASCADE;\nTRUNCATE TABLE ws_sync_state CASCADE;\n\n-- 3. Включаем проверку FK constraints обратно (ВАЖНО!)\nSET session_replication_role = 'origin';\n\n-- 4. Скидаємо sequence для departments на 1\nALTER SEQUENCE ws_departments_id_seq RESTART WITH 1;\n\n-- 5. Ініціалізуємо sync_state\nINSERT INTO ws_sync_state (key, value, updated_at) \nVALUES ('batch_offset', '0', NOW())\nON CONFLICT (key) DO UPDATE SET value = '0', updated_at = NOW();",
+        "query": "-- 1. Отключаем проверку FK constraints (ВАЖНО!)\nSET session_replication_role = 'replica';\n\n-- 2. Очищаем таблицы (task_status_history НЕ трогаем!)\nTRUNCATE TABLE zstg_ws_time_logs CASCADE;\nTRUNCATE TABLE zstg_ws_tasks CASCADE;\nTRUNCATE TABLE zstg_ws_projects CASCADE;\nTRUNCATE TABLE zstg_ws_users CASCADE;\nTRUNCATE TABLE zstg_ws_departments CASCADE;\nTRUNCATE TABLE zstg_ws_sync_state CASCADE;\n\n-- 3. Включаем проверку FK constraints обратно (ВАЖНО!)\nSET session_replication_role = 'origin';\n\n-- 4. Скидаємо sequence для departments на 1\nALTER SEQUENCE zstg_ws_departments_id_seq RESTART WITH 1;\n\n-- 5. Ініціалізуємо sync_state\nINSERT INTO zstg_ws_sync_state (key, value, updated_at) \nVALUES ('batch_offset', '0', NOW())\nON CONFLICT (key) DO UPDATE SET value = '0', updated_at = NOW();",
         "options": {}
       },
       "id": "a613f3ce-2339-41d2-83fb-7b3c49885f94",
@@ -853,7 +853,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": " INSERT INTO ws_users (id, name, email, department_id)\n   VALUES (7, 'Ex-Employee', 'system@web-promo.com', NULL)\n   ON CONFLICT (id) DO UPDATE SET\n     name = EXCLUDED.name,\n     email = EXCLUDED.email;",
+        "query": " INSERT INTO zstg_ws_users (id, name, email, department_id)\n   VALUES (7, 'Ex-Employee', 'system@web-promo.com', NULL)\n   ON CONFLICT (id) DO UPDATE SET\n     name = EXCLUDED.name,\n     email = EXCLUDED.email;",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -896,7 +896,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT EXISTS(\n    SELECT 1 FROM task_status_history \n    WHERE log_date = CURRENT_DATE\n    LIMIT 1\n) as snapshot_exists;",
+        "query": "SELECT EXISTS(\n    SELECT 1 FROM zstg_task_status_history \n    WHERE log_date = CURRENT_DATE\n    LIMIT 1\n) as snapshot_exists;",
         "options": {}
       },
       "id": "ebdd7cf7-2820-44f8-b534-b9c91d079587",
@@ -971,7 +971,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT id FROM ws_users;",
+        "query": "SELECT id FROM zstg_ws_users;",
         "options": {}
       },
       "id": "56aa3b05-174f-47b6-8374-ddef1e233adb",
@@ -994,7 +994,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "-- Отримуємо поточний batch offset\nSELECT COALESCE(\n  (SELECT value::int FROM ws_sync_state WHERE key = 'batch_offset'),\n  0\n) as batch_offset;",
+        "query": "-- Отримуємо поточний batch offset\nSELECT COALESCE(\n  (SELECT value::int FROM zstg_ws_sync_state WHERE key = 'batch_offset'),\n  0\n) as batch_offset;",
         "options": {}
       },
       "id": "1de7e3f2-d48f-4008-8b44-f8b17a6c339f",
@@ -1076,7 +1076,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO task_status_history (log_date, task_id, user_id, status_on_date)\nSELECT \n    CURRENT_DATE,\n    t.id,\n    t.user_to_id,\n    'overdue'\nFROM ws_tasks t\nWHERE \n    t.status = 'active'\n    AND t.date_end IS NOT NULL\n    AND (t.date_end AT TIME ZONE 'Europe/Kiev')::date < CURRENT_DATE\nON CONFLICT (log_date, task_id) \nDO UPDATE SET \n    user_id = EXCLUDED.user_id,\n    status_on_date = EXCLUDED.status_on_date;",
+        "query": "INSERT INTO zstg_task_status_history (log_date, task_id, user_id, status_on_date)\nSELECT \n    CURRENT_DATE,\n    t.id,\n    t.user_to_id,\n    'overdue'\nFROM zstg_ws_tasks t\nWHERE \n    t.status = 'active'\n    AND t.date_end IS NOT NULL\n    AND (t.date_end AT TIME ZONE 'Europe/Kiev')::date < CURRENT_DATE\nON CONFLICT (log_date, task_id) \nDO UPDATE SET \n    user_id = EXCLUDED.user_id,\n    status_on_date = EXCLUDED.status_on_date;",
         "options": {}
       },
       "id": "d484c96e-9a70-4643-80b3-7396b493f977",
@@ -1097,7 +1097,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "-- Исправляем только задачи с явными иероглифами\nWITH updated AS (\n  UPDATE ws_tasks\n  SET \n      name = regexp_replace(name, '[\\u4E00-\\u9FFF\\u3400-\\u4DBF]+', '[ENCODING ERROR]', 'g'),\n      text = regexp_replace(text, '[\\u4E00-\\u9FFF\\u3400-\\u4DBF]+', '[ENCODING ERROR]', 'g')\n  WHERE \n      name ~ '[\\u4E00-\\u9FFF\\u3400-\\u4DBF]'\n      OR text ~ '[\\u4E00-\\u9FFF\\u3400-\\u4DBF]'\n  RETURNING id\n)\nSELECT \n  COUNT(*) as fixed_count,\n  CASE \n    WHEN COUNT(*) > 0 THEN '✅ Fixed ' || COUNT(*) || ' tasks with encoding errors'\n    ELSE '✅ No encoding errors found'\n  END as message\nFROM updated;",
+        "query": "-- Исправляем только задачи с явными иероглифами\nWITH updated AS (\n  UPDATE zstg_ws_tasks\n  SET \n      name = regexp_replace(name, '[\\u4E00-\\u9FFF\\u3400-\\u4DBF]+', '[ENCODING ERROR]', 'g'),\n      text = regexp_replace(text, '[\\u4E00-\\u9FFF\\u3400-\\u4DBF]+', '[ENCODING ERROR]', 'g')\n  WHERE \n      name ~ '[\\u4E00-\\u9FFF\\u3400-\\u4DBF]'\n      OR text ~ '[\\u4E00-\\u9FFF\\u3400-\\u4DBF]'\n  RETURNING id\n)\nSELECT \n  COUNT(*) as fixed_count,\n  CASE \n    WHEN COUNT(*) > 0 THEN '✅ Fixed ' || COUNT(*) || ' tasks with encoding errors'\n    ELSE '✅ No encoding errors found'\n  END as message\nFROM updated;",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
