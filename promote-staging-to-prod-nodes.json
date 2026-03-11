@@ -1,0 +1,97 @@
+{
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-448, 2160],
+      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Promote Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Disable FK constraints\nSET session_replication_role = 'replica';\n\n-- Truncate all prod tables\nTRUNCATE TABLE ws_time_logs CASCADE;\nTRUNCATE TABLE task_status_history CASCADE;\nTRUNCATE TABLE ws_tasks CASCADE;\nTRUNCATE TABLE ws_projects CASCADE;\nTRUNCATE TABLE ws_users CASCADE;\nTRUNCATE TABLE ws_departments CASCADE;\nTRUNCATE TABLE ws_sync_state CASCADE;\nTRUNCATE TABLE ws_sync_logs CASCADE;\n\n-- Re-enable FK constraints\nSET session_replication_role = 'origin';\n\nSELECT 'Prod tables truncated' as message;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [-48, 2160],
+      "id": "a1b2c3d4-0002-4000-8000-000000000002",
+      "name": "Truncate Prod Tables"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Disable FK constraints\nSET session_replication_role = 'replica';\n\n-- 1. Departments\nINSERT INTO ws_departments SELECT * FROM zstg_ws_departments;\n\n-- 2. Users\nINSERT INTO ws_users SELECT * FROM zstg_ws_users;\n\n-- 3. Projects\nINSERT INTO ws_projects SELECT * FROM zstg_ws_projects;\n\n-- 4. Tasks\nINSERT INTO ws_tasks SELECT * FROM zstg_ws_tasks;\n\n-- 5. Time Logs\nINSERT INTO ws_time_logs SELECT * FROM zstg_ws_time_logs;\n\n-- 6. Task Status History\nINSERT INTO task_status_history SELECT * FROM zstg_task_status_history;\n\n-- 7. Sync State\nINSERT INTO ws_sync_state SELECT * FROM zstg_ws_sync_state;\n\n-- Re-enable FK constraints\nSET session_replication_role = 'origin';\n\n-- Reset sequences\nSELECT setval('ws_departments_id_seq', COALESCE((SELECT MAX(id) FROM ws_departments), 1));\nSELECT setval('task_status_history_id_seq', COALESCE((SELECT MAX(id) FROM task_status_history), 1));\n\n-- Return stats\nSELECT \n  (SELECT COUNT(*) FROM ws_departments) as departments,\n  (SELECT COUNT(*) FROM ws_users) as users,\n  (SELECT COUNT(*) FROM ws_projects) as projects,\n  (SELECT COUNT(*) FROM ws_tasks) as tasks,\n  (SELECT COUNT(*) FROM ws_time_logs) as time_logs,\n  (SELECT COUNT(*) FROM task_status_history) as status_history;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [400, 2160],
+      "id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "name": "Copy Staging to Prod"
+    },
+    {
+      "parameters": {
+        "chatId": "-1003503638426",
+        "text": "=🚀 Staging → Prod Promote Complete!\n\n📊 Copied:\n- Departments: {{ $json.departments }}\n- Users: {{ $json.users }}\n- Projects: {{ $json.projects }}\n- Tasks: {{ $json.tasks }}\n- Time Logs: {{ $json.time_logs }}\n- Status History: {{ $json.status_history }}\n\n📅 {{ $now.format('DD.MM.YYYY HH:mm:ss') }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [800, 2160],
+      "id": "a1b2c3d4-0004-4000-8000-000000000004",
+      "name": "Send Promote Report",
+      "webhookId": "9e2e345e-93fe-445d-9fee-295c40951425"
+    },
+    {
+      "parameters": {
+        "content": "## Promote Staging → Prod\n1. TRUNCATE всех prod таблиц (ws_*)\n2. INSERT из staging (zstg_*) в prod (ws_*)\n3. Reset sequences\n4. Telegram отчет\n\n**Запуск:** вручную (Manual Trigger)",
+        "height": 288,
+        "width": 1520,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [-480, 2020],
+      "typeVersion": 1,
+      "id": "a1b2c3d4-0005-4000-8000-000000000005",
+      "name": "Sticky Promote"
+    }
+  ],
+  "connections": {
+    "Promote Trigger": {
+      "main": [
+        [
+          {
+            "node": "Truncate Prod Tables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Truncate Prod Tables": {
+      "main": [
+        [
+          {
+            "node": "Copy Staging to Prod",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Copy Staging to Prod": {
+      "main": [
+        [
+          {
+            "node": "Send Promote Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
